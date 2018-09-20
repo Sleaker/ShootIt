@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL.h>
+#include <SDL_image.h>
 
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
@@ -21,6 +22,9 @@ bool handleEvents() {
 }
 
 void close() {
+	SDL_FreeSurface(loadedImage);
+	loadedImage = NULL;
+
 	SDL_FreeSurface(surface);
 	surface = NULL;
 
@@ -29,14 +33,15 @@ void close() {
 	SDL_Quit();
 }
 
-bool loadMedia() { //Loading success flag 
+bool loadMedia() { 
 	bool success = true; 
 	//Load splash image 
-	loadedImage = SDL_LoadBMP( "resources/hello_world.bmp" ); 
+	loadedImage = IMG_Load("resources/background.png");
 	if( loadedImage == NULL ) { 
-		printf( "Unable to load image %s! SDL Error: %s\n", "02_getting_an_image_on_the_screen/hello_world.bmp", SDL_GetError() ); 
+		printf( "Unable to load image %s! SDL Error: %s\n", "resources/background.png", SDL_GetError() ); 
 		success = false; 
-	} return success; 
+	} 
+	return success; 
 }
 
 bool init() {
@@ -59,9 +64,16 @@ bool init() {
 	return true;
 }
 
-int main(int argc, char* args[]) {
+int main(int argc, char** argv) {
 	if (!init()) {
 		return 1;
+	}
+	if (!loadMedia()) {
+		printf("Failed to load the image!\n");
+	}
+	else {
+		SDL_BlitSurface(loadedImage, NULL, surface, NULL);
+		SDL_UpdateWindowSurface(window);
 	}
 	bool quit = false;
 	while (!quit) {
