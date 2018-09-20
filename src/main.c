@@ -17,6 +17,16 @@ bool handleEvents() {
 		if (e.type == SDL_QUIT) {
 			quit = true;
 		}
+		else if (e.type == SDL_KEYDOWN) {
+			// get the keypress
+			switch (e.key.keysym.sym) {
+			case SDLK_ESCAPE:
+				quit = true;
+				break;
+			default:
+				break;
+			}
+		}
 	}
 	return quit;
 }
