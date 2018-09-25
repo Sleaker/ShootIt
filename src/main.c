@@ -5,10 +5,58 @@
 
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
-SDL_Window* window = NULL;
-SDL_Surface* surface = NULL;
-SDL_Surface* loadedImage = NULL;
+SDL_Window* gWindow = NULL;
+SDL_Texture* gBackground = NULL;
+SDL_Renderer* gRenderer = NULL; // Global rendering Object
 
+/* Function Declarations */
+
+void close();
+void doRendering();
+
+bool handleEvents();
+bool loadMedia();
+bool init();
+
+SDL_Texture* loadTexture(char* path);
+
+int main(int argc, char** argv) {
+	if (!init()) {
+		return 1;
+	}
+	if (!loadMedia()) {
+		printf("Failed to load the image!\n");
+		return 2;
+	}
+	bool quit = false;
+	while (!quit) {
+		quit = handleEvents();
+		doRendering();
+	}
+
+	close();
+	return 0;
+}
+
+void close() {
+	SDL_DestroyTexture(gBackground);
+	gBackground = NULL;
+
+	SDL_DestroyRenderer(gRenderer);
+	SDL_DestroyWindow(gWindow);
+	gRenderer = NULL;
+	gWindow = NULL;
+
+	IMG_Quit();
+	SDL_Quit();
+}
+
+void doRendering() {
+	// Main Rendering loop
+	SDL_RenderClear(gRenderer);
+	SDL_RenderCopy(gRenderer, gBackground, NULL, NULL);
+	SDL_RenderPresent(gRenderer);
+}
 
 bool handleEvents() {
 	bool quit = false;
@@ -31,27 +79,15 @@ bool handleEvents() {
 	return quit;
 }
 
-void close() {
-	SDL_FreeSurface(loadedImage);
-	loadedImage = NULL;
-
-	SDL_FreeSurface(surface);
-	surface = NULL;
-
-	SDL_DestroyWindow(window);
-	window = NULL;
-	SDL_Quit();
-}
-
-bool loadMedia() { 
-	bool success = true; 
+bool loadMedia() {
+	bool success = true;
 	//Load splash image 
-	loadedImage = IMG_Load("resources/background.png");
-	if( loadedImage == NULL ) { 
-		printf( "Unable to load image %s! SDL Error: %s\n", "resources/background.png", SDL_GetError() ); 
-		success = false; 
-	} 
-	return success; 
+	gBackground = loadTexture("resources/background.png");
+	if (gBackground == NULL) {
+		printf("Unable to load background image: %s!\n SDL Error: %s\n", "resources/background.png", SDL_GetError());
+		success = false;
+	}
+	return success;
 }
 
 bool init() {
@@ -59,37 +95,39 @@ bool init() {
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 		return false;
 	}
-	else {
-		window = SDL_CreateWindow("Shoot IT!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-		if (window == NULL) {
-			printf("SDL could not initialize a window! SDL_Error: %s\n", SDL_GetError());
-		}
-		else {
-			surface = SDL_GetWindowSurface(window);
-			SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0xCC, 0xCC, 0xCC));
-			SDL_UpdateWindowSurface(window);
-		}
+
+	gWindow = SDL_CreateWindow("Shoot IT!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+	if (gWindow == NULL) {
+		printf("SDL could not initialize a window! SDL_Error: %s\n", SDL_GetError());
+		return false;
+	}
+
+	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+	if (gRenderer == NULL) {
+		printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+		return false;
+	}
+	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+	if (!IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) {
+		printf("SDL_Image could not initialize! SDL_Image Error: %s\n", IMG_GetError());
+		return false;
 	}
 
 	return true;
 }
 
-int main(int argc, char** argv) {
-	if (!init()) {
-		return 1;
+SDL_Texture* loadTexture(char* path) {
+	SDL_Texture* newTexture = NULL;
+	SDL_Surface* loadedSurface = IMG_Load(path);
+	if (loadedSurface == NULL) {
+		//TODO: Log an error
+		return newTexture;
 	}
-	if (!loadMedia()) {
-		printf("Failed to load the image!\n");
+	newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+	SDL_FreeSurface(loadedSurface);
+	if (newTexture == NULL) {
+		//TODO: Log an error
 	}
-	else {
-		SDL_BlitSurface(loadedImage, NULL, surface, NULL);
-		SDL_UpdateWindowSurface(window);
-	}
-	bool quit = false;
-	while (!quit) {
-		quit = handleEvents();
-	}
-
-	close();
-	return 0;
+	return newTexture;
 }
