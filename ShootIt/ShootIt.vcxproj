@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClCompile Include="..\src\main.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\game_types.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{9C3FC519-750E-4DF4-9CEF-5FBBAAC45DAF}</ProjectGuid>
