@@ -11,9 +11,10 @@ const int SCREEN_HEIGHT = 768;
 // Global Game State Object
 Game game;
 SDL_Texture* gBackground = NULL;
+SpriteSheet font;
 
 
-// Function Declarations 
+// Function Declarations
 void close();
 void doRendering();
 
@@ -83,14 +84,26 @@ bool handleEvents() {
 }
 
 bool loadMedia() {
-	bool success = true;
-	//Load splash image 
+	//Load splash image
 	gBackground = loadTexture("resources/background.png");
 	if (gBackground == NULL) {
 		printf("Unable to load background image: %s!\n SDL Error: %s\n", "resources/background.png", SDL_GetError());
-		success = false;
+		return false;
 	}
-	return success;
+	font.texture = loadTexture("resources/fonts/12x12.png");
+	if (font.texture == NULL) {
+		printf("Unable to load font image: %s!\n SDL Error: %s\n", "resources/fonts/12x12.png", SDL_GetError());
+		return false;
+	}
+	int width = 0;
+	int height = 0;
+
+	SDL_QueryTexture(font.texture, NULL, NULL, &width, &height);
+	font.spritesPerRow = 16;
+	font.spriteHeight = height / font.spritesPerRow;
+	font.spriteWidth = width / font.spritesPerRow;
+
+	return true;
 }
 
 bool init() {
