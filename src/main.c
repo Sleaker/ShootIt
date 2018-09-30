@@ -8,6 +8,8 @@
 
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
+const int MAX_FPS = 60;
+const int MAX_TICKS_PER_SECONDS = 1000 / MAX_FPS;
 
 // Global Game State Object
 Game game;
@@ -27,18 +29,28 @@ SDL_Texture* loadTexture(const char* path);
 
 int main(int argc, char** argv) {
 	if (!init()) {
+		printf("Failed to initialize\n");
 		return 1;
 	}
+	printf("Loading Media\n");
 	if (!loadMedia()) {
 		printf("Failed to load the image!\n");
 		return 2;
 	}
+	printf("Main game loop\n");
 	bool quit = false;
 	while (!quit) {
 		quit = handleEvents();
 		doRendering();
-		printf("Frame Time: %i ms\n", SDL_GetTicks() - game.lastFrameTime);
-		game.lastFrameTime = SDL_GetTicks();
+		Uint32 currentTicks = SDL_GetTicks();
+		
+		if ( currentTicks - game.lastFrameTime < MAX_TICKS_PER_SECONDS) {
+			SDL_Delay(MAX_TICKS_PER_SECONDS - (currentTicks - game.lastFrameTime));
+		}
+		currentTicks = SDL_GetTicks();
+		//printf("Frame Time: %i ms\n", currentTicks - game.lastFrameTime);
+		game.lastFrameTime = currentTicks;
+		
 	}
 
 	close();
@@ -68,11 +80,12 @@ void doRendering() {
 bool handleEvents() {
 	bool quit = false;
 	SDL_Event e;
-	while (SDL_PollEvent(&e) != 0) {
+	while (SDL_PollEvent(&e)) {
 		if (e.type == SDL_QUIT) {
 			quit = true;
 		}
 		else if (e.type == SDL_KEYDOWN) {
+			printf("Key press detected.\n");
 			// get the keypress
 			switch (e.key.keysym.sym) {
 			case SDLK_ESCAPE:
@@ -81,6 +94,7 @@ bool handleEvents() {
 			default:
 				break;
 			}
+			printf("Key: %d\n", e.key.keysym.sym);
 		}
 	}
 	return quit;
@@ -98,10 +112,11 @@ bool loadMedia() {
 		printf("Unable to load font image: %s!\n SDL Error: %s\n", "resources/fonts/12x12.png", SDL_GetError());
 		return false;
 	}
+	Uint32* format = NULL;
+	int* access = NULL;
 	int width = 0;
 	int height = 0;
-
-	SDL_QueryTexture(font.texture, NULL, NULL, &width, &height);
+	SDL_QueryTexture(font.texture, format, access, &width, &height);
 	font.spritesPerRow = 16;
 	font.spriteHeight = height / font.spritesPerRow;
 	font.spriteWidth = width / font.spritesPerRow;
@@ -110,6 +125,7 @@ bool loadMedia() {
 }
 
 bool init() {
+	printf("Initializing SDL2\n");
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 		return false;
@@ -117,20 +133,23 @@ bool init() {
 
 	game.lastFrameTime = SDL_GetTicks();
 
+	printf("Creating the game window\n");
 	game.window = SDL_CreateWindow("Shoot IT!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 	if (game.window == NULL) {
 		printf("SDL could not initialize a window! SDL_Error: %s\n", SDL_GetError());
 		return false;
 	}
 
-	game.renderer = SDL_CreateRenderer(game.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	printf("Creating the game renderer\n");
+	game.renderer = SDL_CreateRenderer(game.window, -1, SDL_RENDERER_SOFTWARE);
 	if (game.renderer == NULL) {
 		printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
 		return false;
 	}
 	SDL_SetRenderDrawColor(game.renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
-	if (!IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) {
+	printf("Initializing SDL_Image & PNG Support\n");
+	if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
 		printf("SDL_Image could not initialize! SDL_Image Error: %s\n", IMG_GetError());
 		return false;
 	}
