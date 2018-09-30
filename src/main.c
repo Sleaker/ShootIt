@@ -18,7 +18,7 @@ SpriteSheet font;
 
 
 // Function Declarations
-void close();
+void closeGame();
 void doRendering();
 
 bool handleEvents();
@@ -53,11 +53,11 @@ int main(int argc, char** argv) {
 		
 	}
 
-	close();
+	closeGame();
 	return 0;
 }
 
-void close() {
+void closeGame() {
 	SDL_DestroyTexture(gBackground);
 	gBackground = NULL;
 
@@ -126,7 +126,7 @@ bool loadMedia() {
 
 bool init() {
 	printf("Initializing SDL2\n");
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) < 0) {
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 		return false;
 	}
