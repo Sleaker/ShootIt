@@ -6,10 +6,13 @@
 
 #include "game_types.h"
 
+#define MAX_FPS 60
+#define MAX_TICKS_PER_SECONDS (1000 / MAX_FPS)
+
 const int SCREEN_WIDTH = 1024;
 const int SCREEN_HEIGHT = 768;
-const int MAX_FPS = 60;
-const int MAX_TICKS_PER_SECONDS = 1000 / MAX_FPS;
+
+const Uint32 TICK_LIMIT = MAX_TICKS_PER_SECONDS;
 
 // Global Game State Object
 Game game;
@@ -44,8 +47,8 @@ int main(int argc, char** argv) {
 		doRendering();
 		Uint32 currentTicks = SDL_GetTicks();
 		
-		if ( currentTicks - game.lastFrameTime < MAX_TICKS_PER_SECONDS) {
-			SDL_Delay(MAX_TICKS_PER_SECONDS - (currentTicks - game.lastFrameTime));
+		if ( currentTicks - game.lastFrameTime < TICK_LIMIT) {
+			SDL_Delay(TICK_LIMIT - (currentTicks - game.lastFrameTime));
 		}
 		currentTicks = SDL_GetTicks();
 		//printf("Frame Time: %i ms\n", currentTicks - game.lastFrameTime);
@@ -78,26 +81,25 @@ void doRendering() {
 }
 
 bool handleEvents() {
-	bool quit = false;
 	SDL_Event e;
 	while (SDL_PollEvent(&e)) {
 		if (e.type == SDL_QUIT) {
-			quit = true;
+			return true;
 		}
 		else if (e.type == SDL_KEYDOWN) {
-			printf("Key press detected.\n");
 			// get the keypress
+			printf("Key: %d\n", e.key.keysym.sym);
 			switch (e.key.keysym.sym) {
 			case SDLK_ESCAPE:
-				quit = true;
+				return true;
 				break;
 			default:
 				break;
 			}
-			printf("Key: %d\n", e.key.keysym.sym);
+			
 		}
 	}
-	return quit;
+	return false;
 }
 
 bool loadMedia() {
